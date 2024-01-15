@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web
+  namespace: homework
+  labels:
+    app: web
+spec:
+  initContainers:
+  - name: init-myservice
+    image: busybox:1.36.1
+    volumeMounts:
+    - name: homework
+      mountPath: /init
+    command: ['sh', '-c', 'wget -O- https://raw.githubusercontent.com/TomYork1986/otus_learning/main/wget.sh | sh']
+  containers:
+  - name: nginx
+    image: tomyork1986/simple-web-server:1.1.0
+    volumeMounts:
+    - name: homework
+      mountPath: /homework
+    lifecycle:
+      preStop:
+        exec:
+          command: ["/bin/sh", "-c", "rm -f /homework/index.html"]
+  volumes:
+  - name: homework
+    emptyDir: {}
