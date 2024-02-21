@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: homework
+  labels:
+    app: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      initContainers:
+      - name: init-myservice
+        image: busybox:1.36.1
+        volumeMounts:
+        - name: homework
+          mountPath: /init
+        command: ['sh', '-c', 'echo \"Simple index.html file\" >> /init/index.html']
+      containers:
+      - name: server
+        image: tomyork1986/simple-web-server:1.1.0
+        volumeMounts:
+        - name: homework
+          mountPath: /homework
+        - name: configmap-volume
+          mountPath: /homework/conf
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "rm -f /homework/index.html"]
+        readinessProbe:
+          initialDelaySeconds: 10
+          httpGet:
+            path: "/index.html"
+            port: 8000
+            httpHeaders:
+            - name: "Cookie"
+              value: "shop_session-id=x-readiness-probe"
+      volumes:
+      - name: homework
+        persistentVolumeClaim:
+          claimName: frontend-pvc
+      - name: configmap-volume
+        configMap:
+          name: frontend-configmap
+      serviceAccountName: monitoring
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
