@@ -1,0 +1,12 @@
+apiVersion: v2
+name: my-web-app
+description: A Helm chart for example web application
+type: application
+maintainers: # (optional)
+  - name: A.Obidchenko
+version: 0.0.1
+appVersion: "0.0.1"
+dependencies:
+  - name: redis
+    version: "18.17.1"
+    repository: "https://charts.bitnami.com/bitnami"
