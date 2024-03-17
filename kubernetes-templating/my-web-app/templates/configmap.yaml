@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.storage.configMap.name }}
+  namespace: {{ .Values.namespace }}
+data:
+  url: "{{ .Values.storage.configMap.data }}"
+  timeout: "{{ .Values.storage.configMap.timeout }}"
