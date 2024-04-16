@@ -1,0 +1,67 @@
+namespace: homework
+
+deployment:
+  name: frontend
+  labels: frontend
+  initContainers:
+    name: init-myservice
+    command: "'sh', '-c', 'echo \"Simple index.html file\" >> /init/index.html'"
+    image: busybox
+    tag: "1.36.1"
+    volumeMounts:
+      - name: homework
+        mountPath: /init
+  containers:
+    name: webserver
+    command: "'/bin/sh', '-c', 'rm -f /homework/index.html'"
+    image: "tomyork1986/simple-web-server"
+    tag: "1.1.0"
+    port: 8000
+    readinessProbeDelay: 10
+    readinessProbe: True
+  volumes:
+    - name: homework
+      mountPath: /homework
+      claimName: frontend-pvc
+    - name: configmap-volume
+      mountPath: /homework/conf
+      configMapName: frontend-configmap
+  replicas: 3
+  deploymentType: RollingUpdate
+  deploymentMaxUnavailable: 1
+  serviceAccountName: monitoring
+
+network:
+  ingress:
+    name: ingress
+    host: "homework.otus"
+  service:
+    name: "web-service"
+    port: 80
+    targetPort: 8000
+    portName: "web-port"
+
+storage:
+  configMap:
+    name: "frontend-configmap"
+    data: "http://homework.otus"
+    timeout: 60
+  storageClass:
+    name: "frontend-sc"
+    provisioner: "k8s.io/minikube-hostpath"
+    reclaimPolicy: Retain
+    allowVolumeExpansion: true
+    volumeBindingMode: Immediate
+  pvc:
+    name: "frontend-pvc"
+    accessModes: ReadWriteOnce
+    volumeMode: Filesystem
+    storageSize: "1Gi"
+
+rbac:
+  serviceAccount:
+    adminAccount: cd
+    monitoringAccount: monitoring
+  role:
+    adminRole: "ca-admin"
+    monitoringRole: "endpoint-monitoring"

@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployment.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.deployment.labels }}
+spec:
+  replicas: {{ .Values.deployment.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.deployment.labels }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.deployment.labels }}
+    spec:
+      initContainers:
+      - name: {{ .Values.deployment.initContainers.name }}
+        image: {{ .Values.deployment.initContainers.image }}:{{ .Values.deployment.initContainers.tag }}
+        volumeMounts:
+            {{- if .Values.deployment.initContainers.volumeMounts }}
+            {{- range .Values.deployment.initContainers.volumeMounts }}
+        - name: {{ .name }}
+          mountPath: {{ .mountPath }}
+            {{- end }}
+            {{- end }}
+        command: [{{ .Values.deployment.initContainers.command }}]
+      containers:
+      - name: {{ .Values.deployment.containers.name }}
+        image: {{ .Values.deployment.containers.image }}:{{ .Values.deployment.containers.tag }}
+        volumeMounts:
+            {{- if .Values.deployment.volumes }}
+            {{- range .Values.deployment.volumes }}
+        - name: {{ .name }}
+          mountPath: {{ .mountPath }}
+            {{- end }}
+            {{- end }}
+        lifecycle:
+          preStop:
+            exec:
+              command: [{{ .Values.deployment.containers.command }}]
+        {{- if .Values.deployment.containers.readinessProbe }}
+        readinessProbe:
+          initialDelaySeconds: {{ .Values.deployment.containers.readinessProbeDelay }}
+          httpGet:
+            path: "/index.html"
+            port: {{ .Values.deployment.containers.port }}
+            httpHeaders:
+            - name: "Cookie"
+              value: "shop_session-id=x-readiness-probe"
+        {{- end }}
+      volumes:
+          {{- if .Values.deployment.volumes }}
+          {{- range .Values.deployment.volumes }}
+      - name: {{ .name }}
+        {{- if .claimName }}
+        persistentVolumeClaim:
+          claimName: {{ .claimName }}
+        {{- end }}
+        {{- if .configMapName }}
+        configMap:
+          name: {{ .configMapName }}
+        {{- end }}
+          {{- end }}
+          {{- end }}
+      serviceAccountName: {{ .Values.deployment.serviceAccountName }}
+  strategy:
+    type: {{ .Values.deployment.deploymentType }}
+    rollingUpdate:
+      maxUnavailable: {{ .Values.deployment.deploymentMaxUnavailable }}
