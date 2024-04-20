@@ -7,8 +7,8 @@ loki:
     type: 's3'
     s3:
       endpoint: storage.yandexcloud.net
-      secretAccessKey: YCMvDYgHDVu2suVSiU-DZEgy-y-rHg1G9bBwkR-k
-      accessKeyId: YCAJEuxYXA_RwsxpqZsgnSeTZ
+      secretAccessKey: <SECRET_ACCESS_KEY>
+      accessKeyId: <ACCERSS_KEY_ID>
   auth_enabled: false
   commonConfig:
     replication_factor: 1
